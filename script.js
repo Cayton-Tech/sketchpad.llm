@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- API Call Function (Aligned with Gemini REST API Docs) ---
     async function callGeminiApi(apiKey, userPrompt) {
-        const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+        const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
         const systemInstruction = `
 You are an expert in Mermaid.js syntax. Your task is to take a user's text description and convert it into valid, clean Mermaid.js code.
