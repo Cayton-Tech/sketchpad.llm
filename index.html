@@ -17,9 +17,16 @@
             <p>Turn text prompts into diagrams with AI.</p>
         </header>
 
-        <!-- The area where the Mermaid diagram will be rendered -->
-        <div id="diagram-container" class="diagram-container">
-            <p class="placeholder-text">Your generated diagram will appear here...</p>
+        <!-- The area where the Mermaid diagram and code will be displayed -->
+        <div class="viewer-container">
+            <div class="tabs">
+                <button id="diagram-tab" class="tab active">Diagram</button>
+                <button id="code-tab" class="tab">Code</button>
+            </div>
+            <div id="diagram-container" class="diagram-container">
+                <p class="placeholder-text">Your generated diagram will appear here...</p>
+            </div>
+            <pre id="code-container" class="code-container hidden"><code id="code-block" class="placeholder-text">Mermaid code will appear here...</code></pre>
         </div>
 
         <!-- The input controls -->

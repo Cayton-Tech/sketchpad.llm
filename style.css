@@ -115,3 +115,46 @@ button.loading {
     cursor: not-allowed;
     background-color: #a9cce3;
 }
+
+/* --- Viewer Tabs and Code Container --- */
+.tabs {
+    display: flex;
+}
+
+.tab {
+    flex: 1;
+    padding: 10px;
+    background-color: var(--container-bg);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    text-align: center;
+}
+
+.tab:not(:last-child) {
+    border-right: none;
+}
+
+.tab.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.code-container {
+    background-color: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    min-height: 400px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    overflow: auto;
+    font-family: monospace;
+}
+
+.code-container code {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.hidden {
+    display: none;
+}

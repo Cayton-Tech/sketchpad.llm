@@ -29,6 +29,8 @@ Session-based API key input (no backend required)
 
 Works with Gemini via Google AI Studio
 
+Tabbed viewer to switch between rendered diagram and Mermaid source
+
 "Copy Mermaid Code" button for manual export
 
 Export guidance for importing into draw.io or other tools

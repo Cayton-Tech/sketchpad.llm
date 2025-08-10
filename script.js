@@ -5,9 +5,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const promptInput = document.getElementById('prompt-input');
     const generateBtn = document.getElementById('generate-btn');
     const diagramContainer = document.getElementById('diagram-container');
+    const diagramTab = document.getElementById('diagram-tab');
+    const codeTab = document.getElementById('code-tab');
+    const codeContainer = document.getElementById('code-container');
+    const codeBlock = document.getElementById('code-block');
 
-    // --- Event Listener ---
+    // --- Event Listeners ---
     generateBtn.addEventListener('click', handleGenerateClick);
+    diagramTab.addEventListener('click', () => switchTab('diagram'));
+    codeTab.addEventListener('click', () => switchTab('code'));
 
     // --- Main Function to Handle Generation ---
     async function handleGenerateClick() {
@@ -24,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         setLoadingState(true);
+        switchTab('diagram');
         diagramContainer.innerHTML = '<p class="placeholder-text">Generating diagram, please wait...</p>';
 
         try {
@@ -88,7 +95,10 @@ Do not include any other text, explanations, or titles before or after the code 
             diagramContainer.innerHTML = `<p class="placeholder-text" style="color: var(--error-color);">Could not extract valid Mermaid code from the API response. The response may have been empty or in an unexpected format.</p>`;
             return;
         }
-        
+
+        codeBlock.textContent = mermaidCode;
+        codeBlock.classList.remove('placeholder-text');
+
         try {
             // Unique ID for Mermaid to render into
             const renderId = 'mermaid-graph-' + Date.now();
@@ -109,6 +119,20 @@ Do not include any other text, explanations, or titles before or after the code 
         } else {
             generateBtn.classList.remove('loading');
             generateBtn.textContent = 'Generate Diagram';
+        }
+    }
+
+    function switchTab(view) {
+        if (view === 'diagram') {
+            diagramTab.classList.add('active');
+            codeTab.classList.remove('active');
+            diagramContainer.classList.remove('hidden');
+            codeContainer.classList.add('hidden');
+        } else {
+            diagramTab.classList.remove('active');
+            codeTab.classList.add('active');
+            diagramContainer.classList.add('hidden');
+            codeContainer.classList.remove('hidden');
         }
     }
 });
