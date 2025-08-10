@@ -17,18 +17,6 @@
             <p>Turn text prompts into diagrams with AI.</p>
         </header>
 
-        <!-- The area where the Mermaid diagram and code will be displayed -->
-        <div class="viewer-container">
-            <div class="tabs">
-                <button id="diagram-tab" class="tab active">Diagram</button>
-                <button id="code-tab" class="tab">Code</button>
-            </div>
-            <div id="diagram-container" class="diagram-container">
-                <p class="placeholder-text">Your generated diagram will appear here...</p>
-            </div>
-            <pre id="code-container" class="code-container hidden"><code id="code-block" class="placeholder-text">Mermaid code will appear here...</code></pre>
-        </div>
-
         <!-- The input controls -->
         <div class="controls-container">
             <div class="api-key-container">
@@ -37,6 +25,18 @@
             </div>
             <textarea id="prompt-input" placeholder="e.g., A flowchart for a user login process with success and failure paths..."></textarea>
             <button id="generate-btn">Generate Diagram</button>
+        </div>
+
+        <!-- The area where the Mermaid diagram and code will be displayed -->
+        <div class="viewer-container">
+            <div class="tabs" role="tablist">
+                <button id="diagram-tab" class="tab active" role="tab" aria-selected="true">Diagram</button>
+                <button id="code-tab" class="tab" role="tab" aria-selected="false">Code</button>
+            </div>
+            <div id="diagram-container" class="diagram-container">
+                <p class="placeholder-text">Your generated diagram will appear here...</p>
+            </div>
+            <pre id="code-container" class="code-container hidden"><code id="code-block" class="placeholder-text">Mermaid code will appear here...</code></pre>
         </div>
 
     </div>
