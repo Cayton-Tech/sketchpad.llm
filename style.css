@@ -46,7 +46,8 @@ body {
 .diagram-container {
     background-color: var(--container-bg);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
     min-height: 400px;
     padding: 20px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
@@ -104,6 +105,9 @@ button {
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 button:hover {
@@ -116,22 +120,39 @@ button.loading {
     background-color: #a9cce3;
 }
 
+button.loading::after {
+    content: "";
+    margin-left: 8px;
+    border: 2px solid white;
+    border-top-color: transparent;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 /* --- Viewer Tabs and Code Container --- */
 .tabs {
     display: flex;
+    border: 1px solid var(--border-color);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
 }
 
 .tab {
     flex: 1;
     padding: 10px;
-    background-color: var(--container-bg);
-    border: 1px solid var(--border-color);
+    background-color: #f0f0f0;
+    color: var(--text-color);
     cursor: pointer;
     text-align: center;
-}
-
-.tab:not(:last-child) {
-    border-right: none;
+    transition: background-color 0.2s;
 }
 
 .tab.active {
@@ -139,10 +160,15 @@ button.loading {
     color: white;
 }
 
+.tab:not(.active):hover {
+    background-color: #e0e0e0;
+}
+
 .code-container {
     background-color: var(--container-bg);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
     min-height: 400px;
     padding: 20px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
@@ -157,4 +183,18 @@ button.loading {
 
 .hidden {
     display: none;
+}
+
+/* Responsive tweaks */
+@media (max-width: 600px) {
+    .diagram-container,
+    .code-container {
+        min-height: 250px;
+        padding: 10px;
+    }
+
+    button {
+        padding: 12px;
+        font-size: 1em;
+    }
 }
