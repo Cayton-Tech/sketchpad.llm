@@ -78,7 +78,7 @@ Do not include any other text, explanations, or titles before or after the code 
     // --- Mermaid Code Extraction Function ---
     function extractMermaidCode(responseText) {
         if (!responseText) return null;
-        const match = responseText.match(/```mermaid\n([\s\S]*?)\n```/);
+        const match = responseText.match(/```mermaid\r?\n([\s\S]*?)\r?\n```/);
         return match ? match[1].trim() : null;
     }
     
