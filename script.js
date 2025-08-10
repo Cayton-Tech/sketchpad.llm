@@ -122,17 +122,21 @@ Do not include any other text, explanations, or titles before or after the code 
         }
     }
 
-    function switchTab(view) {
-        if (view === 'diagram') {
-            diagramTab.classList.add('active');
-            codeTab.classList.remove('active');
-            diagramContainer.classList.remove('hidden');
-            codeContainer.classList.add('hidden');
-        } else {
-            diagramTab.classList.remove('active');
-            codeTab.classList.add('active');
-            diagramContainer.classList.add('hidden');
-            codeContainer.classList.remove('hidden');
-        }
-    }
-});
+      function switchTab(view) {
+          if (view === 'diagram') {
+              diagramTab.classList.add('active');
+              codeTab.classList.remove('active');
+              diagramContainer.classList.remove('hidden');
+              codeContainer.classList.add('hidden');
+              diagramTab.setAttribute('aria-selected', 'true');
+              codeTab.setAttribute('aria-selected', 'false');
+          } else {
+              diagramTab.classList.remove('active');
+              codeTab.classList.add('active');
+              diagramContainer.classList.add('hidden');
+              codeContainer.classList.remove('hidden');
+              diagramTab.setAttribute('aria-selected', 'false');
+              codeTab.setAttribute('aria-selected', 'true');
+          }
+      }
+  });
