@@ -11,9 +11,6 @@
 </head>
 <body>
 
-    <!-- Toast Notification Container -->
-    <div id="toast-container" class="toast-container"></div>
-
     <div class="app-container">
         <header class="app-header">
             <h1>sketchpad.llm</h1>
@@ -22,154 +19,26 @@
 
         <!-- The input controls -->
         <div class="controls-container">
-            <div class="api-key-section">
-                <div class="api-key-header">
-                    <label for="apiKey">Google AI Studio API Key</label>
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="api-key-help" title="Get your API key from Google AI Studio">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                            <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM8 12a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm0-9a1 1 0 0 0-1 1v5a1 1 0 0 0 2 0V4a1 1 0 0 0-1-1z"/>
-                        </svg>
-                        <span class="help-text">Get API Key</span>
-                    </a>
-                </div>
-                <div class="api-key-container">
-                    <input type="password" id="apiKey" placeholder="Enter your API key (stored for session only)" autocomplete="off">
-                    <button id="toggle-key-visibility" class="icon-btn" type="button" aria-label="Toggle API key visibility">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M10 4C5 4 1.73 7.11 1 10c.73 2.89 4 6 9 6s8.27-3.11 9-6c-.73-2.89-4-6-9-6zm0 10a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
-                        </svg>
-                    </button>
-                </div>
+            <div class="api-key-container">
+                <label for="apiKey">Google AI Studio API Key</label>
+                <input type="password" id="apiKey" placeholder="Enter your API key (stored for session only)">
             </div>
-
-            <!-- Quick Start Examples -->
-            <div class="examples-section">
-                <div class="examples-header">
-                    <span class="examples-label">Quick Start Examples:</span>
-                    <button id="toggle-examples" class="toggle-btn" type="button" aria-expanded="true" aria-controls="examples-list">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" class="chevron">
-                            <path d="M4.427 9.573l3.396-3.396a.25.25 0 01.354 0l3.396 3.396a.25.25 0 01-.177.427H4.604a.25.25 0 01-.177-.427z"/>
-                        </svg>
-                    </button>
-                </div>
-                <div id="examples-list" class="examples-list">
-                    <button class="example-chip" data-prompt="A flowchart showing a user login process with username/password input, authentication check, success path leading to dashboard, and failure path with retry option">
-                        <span class="chip-icon">📊</span> Login Flowchart
-                    </button>
-                    <button class="example-chip" data-prompt="A sequence diagram showing interaction between User, Frontend, API Server, and Database for a typical e-commerce checkout process">
-                        <span class="chip-icon">🔄</span> Sequence Diagram
-                    </button>
-                    <button class="example-chip" data-prompt="An entity relationship diagram for a blog platform with entities: Users, Posts, Comments, Tags, and their relationships">
-                        <span class="chip-icon">🗂️</span> ER Diagram
-                    </button>
-                    <button class="example-chip" data-prompt="A class diagram for a simple e-commerce system with classes: Product, Order, Customer, ShoppingCart, and Payment">
-                        <span class="chip-icon">📦</span> Class Diagram
-                    </button>
-                    <button class="example-chip" data-prompt="A Gantt chart for a 3-month software development project with phases: Planning, Design, Development, Testing, and Deployment">
-                        <span class="chip-icon">📅</span> Gantt Chart
-                    </button>
-                    <button class="example-chip" data-prompt="A state diagram showing the lifecycle states of an order: Created, Pending Payment, Processing, Shipped, Delivered, Cancelled">
-                        <span class="chip-icon">🔀</span> State Diagram
-                    </button>
-                </div>
-            </div>
-
-            <div class="prompt-container">
-                <label for="prompt-input">Describe your diagram:</label>
-                <textarea id="prompt-input" placeholder="Describe the diagram you want to create... Be specific about entities, relationships, and flow."></textarea>
-                <div class="prompt-footer">
-                    <span class="keyboard-hint">Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to generate</span>
-                    <button id="clear-prompt" class="text-btn" type="button">Clear</button>
-                </div>
-            </div>
-
-            <button id="generate-btn" class="primary-btn">
-                <span class="btn-text">Generate Diagram</span>
-            </button>
-
-            <!-- Collapsible Tips Section -->
-            <details class="tips-section">
-                <summary class="tips-header">
-                    <span>💡 Tips for better diagrams</span>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" class="chevron">
-                        <path d="M4.427 9.573l3.396-3.396a.25.25 0 01.354 0l3.396 3.396a.25.25 0 01-.177.427H4.604a.25.25 0 01-.177-.427z"/>
-                    </svg>
-                </summary>
-                <div class="tips-content">
-                    <ul>
-                        <li><strong>Be specific:</strong> Include names, labels, and relationships</li>
-                        <li><strong>Mention the type:</strong> Flowchart, sequence diagram, ER diagram, etc.</li>
-                        <li><strong>Describe the flow:</strong> Explain connections and decision points</li>
-                        <li><strong>Keep it focused:</strong> Start simple, you can always regenerate with more detail</li>
-                    </ul>
-                </div>
-            </details>
+            <textarea id="prompt-input" placeholder="e.g., A flowchart for a user login process with success and failure paths..."></textarea>
+            <button id="generate-btn">Generate Diagram</button>
         </div>
 
         <!-- The area where the Mermaid diagram and code will be displayed -->
         <div class="viewer-container">
-            <div class="viewer-header">
-                <div class="tabs" role="tablist">
-                    <button id="diagram-tab" class="tab active" role="tab" aria-selected="true">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                            <path d="M1.5 2A1.5 1.5 0 003 3.5v9A1.5 1.5 0 001.5 14h-1A.5.5 0 010 13.5v-11A.5.5 0 01.5 2h1zm13 0a.5.5 0 01.5.5v11a.5.5 0 01-.5.5h-1a1.5 1.5 0 01-1.5-1.5v-9A1.5 1.5 0 0113 2h1.5zM6.5 4a.5.5 0 00-.5.5v7a.5.5 0 00.5.5h3a.5.5 0 00.5-.5v-7a.5.5 0 00-.5-.5h-3z"/>
-                        </svg>
-                        <span>Diagram</span>
-                    </button>
-                    <button id="code-tab" class="tab" role="tab" aria-selected="false">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                            <path d="M5.854 4.854a.5.5 0 10-.708-.708l-3.5 3.5a.5.5 0 000 .708l3.5 3.5a.5.5 0 00.708-.708L2.707 8l3.147-3.146zm4.292 0a.5.5 0 01.708-.708l3.5 3.5a.5.5 0 010 .708l-3.5 3.5a.5.5 0 01-.708-.708L13.293 8l-3.147-3.146z"/>
-                        </svg>
-                        <span>Code</span>
-                    </button>
-                </div>
-                <div class="viewer-actions">
-                    <button id="copy-code-btn" class="icon-btn hidden" title="Copy code to clipboard">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                            <path d="M4 1.5H3a2 2 0 00-2 2V14a2 2 0 002 2h10a2 2 0 002-2V3.5a2 2 0 00-2-2h-1v1h1a1 1 0 011 1V14a1 1 0 01-1 1H3a1 1 0 01-1-1V3.5a1 1 0 011-1h1v-1z"/>
-                            <path d="M9.5 1a.5.5 0 01.5.5v1a.5.5 0 01-.5.5h-3a.5.5 0 01-.5-.5v-1a.5.5 0 01.5-.5h3zm-3-1A1.5 1.5 0 005 1.5v1A1.5 1.5 0 006.5 4h3A1.5 1.5 0 0011 2.5v-1A1.5 1.5 0 009.5 0h-3z"/>
-                        </svg>
-                        <span class="btn-text-small">Copy</span>
-                    </button>
-                    <button id="fullscreen-btn" class="icon-btn hidden" title="View fullscreen">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                            <path d="M5.828 10.172a.5.5 0 00-.707 0l-4.096 4.096V11.5a.5.5 0 00-1 0v3.975a.5.5 0 00.5.5H4.5a.5.5 0 000-1H1.732l4.096-4.096a.5.5 0 000-.707zm4.344-4.344a.5.5 0 00.707 0l4.096-4.096V4.5a.5.5 0 101 0V.525a.5.5 0 00-.5-.5H11.5a.5.5 0 000 1h2.768l-4.096 4.096a.5.5 0 000 .707z"/>
-                        </svg>
-                        <span class="btn-text-small">Fullscreen</span>
-                    </button>
-                </div>
+            <div class="tabs" role="tablist">
+                <button id="diagram-tab" class="tab active" role="tab" aria-selected="true">Diagram</button>
+                <button id="code-tab" class="tab" role="tab" aria-selected="false">Code</button>
             </div>
             <div id="diagram-container" class="diagram-container">
-                <div class="empty-state">
-                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" class="empty-icon">
-                        <rect x="8" y="8" width="48" height="48" rx="4" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4"/>
-                        <circle cx="20" cy="20" r="3" fill="currentColor" opacity="0.3"/>
-                        <circle cx="32" cy="20" r="3" fill="currentColor" opacity="0.3"/>
-                        <circle cx="44" cy="20" r="3" fill="currentColor" opacity="0.3"/>
-                        <line x1="20" y1="25" x2="20" y2="35" stroke="currentColor" opacity="0.3" stroke-width="2"/>
-                        <line x1="32" y1="25" x2="32" y2="35" stroke="currentColor" opacity="0.3" stroke-width="2"/>
-                        <line x1="44" y1="25" x2="44" y2="35" stroke="currentColor" opacity="0.3" stroke-width="2"/>
-                    </svg>
-                    <p class="empty-title">Ready to create your diagram</p>
-                    <p class="empty-description">Choose an example above or describe your own diagram to get started</p>
-                </div>
+                <p class="placeholder-text">Your generated diagram will appear here...</p>
             </div>
             <pre id="code-container" class="code-container hidden"><code id="code-block" class="placeholder-text">Mermaid code will appear here...</code></pre>
         </div>
 
-    </div>
-
-    <!-- Fullscreen Modal -->
-    <div id="fullscreen-modal" class="fullscreen-modal hidden">
-        <div class="fullscreen-header">
-            <h2>Diagram View</h2>
-            <button id="close-fullscreen" class="icon-btn" title="Close fullscreen">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
-            </button>
-        </div>
-        <div id="fullscreen-content" class="fullscreen-content"></div>
     </div>
 
     <!-- Import Mermaid.js library -->
