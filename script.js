@@ -9,11 +9,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const codeTab = document.getElementById('code-tab');
     const codeContainer = document.getElementById('code-container');
     const codeBlock = document.getElementById('code-block');
+    const copyBtn = document.getElementById('copy-btn');
+    const downloadBtn = document.getElementById('download-btn');
+
+    const toolbarButtons = [copyBtn, downloadBtn];
+    const buttonFeedbackTimers = new WeakMap();
+    const defaultCodePlaceholder = codeBlock.textContent;
+    let latestSvgMarkup = '';
 
     // --- Event Listeners ---
     generateBtn.addEventListener('click', handleGenerateClick);
     diagramTab.addEventListener('click', () => switchTab('diagram'));
     codeTab.addEventListener('click', () => switchTab('code'));
+    copyBtn.addEventListener('click', handleCopyClick);
+    downloadBtn.addEventListener('click', handleDownloadClick);
+
+    setToolbarState(false);
 
     // --- Main Function to Handle Generation ---
     async function handleGenerateClick() {
@@ -31,14 +42,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setLoadingState(true);
         switchTab('diagram');
-        diagramContainer.innerHTML = '<p class="placeholder-text">Generating diagram, please wait...</p>';
+        showDiagramMessage('Generating diagram, please wait...', { preserveIllustration: true });
+        resetCodeBlock();
+        latestSvgMarkup = '';
+        setToolbarState(false);
 
         try {
             const rawResponseText = await callGeminiApi(apiKey, userPrompt);
             const mermaidCode = extractMermaidCode(rawResponseText);
             await renderMermaidDiagram(mermaidCode);
         } catch (error) {
-            diagramContainer.innerHTML = `<p class="placeholder-text" style="color: var(--error-color);">Error: ${error.message}</p>`;
+            showDiagramMessage(`Error: ${error.message}`, { isError: true });
+            setToolbarState(false);
             console.error('Error generating diagram:', error);
         } finally {
             setLoadingState(false);
@@ -92,7 +107,9 @@ Do not include any other text, explanations, or titles before or after the code 
     // --- Mermaid Rendering Function ---
     async function renderMermaidDiagram(mermaidCode) {
         if (!mermaidCode) {
-            diagramContainer.innerHTML = `<p class="placeholder-text" style="color: var(--error-color);">Could not extract valid Mermaid code from the API response. The response may have been empty or in an unexpected format.</p>`;
+            showDiagramMessage('Could not extract valid Mermaid code from the API response. The response may have been empty or in an unexpected format.', { isError: true });
+            resetCodeBlock();
+            setToolbarState(false);
             return;
         }
 
@@ -103,9 +120,15 @@ Do not include any other text, explanations, or titles before or after the code 
             // Unique ID for Mermaid to render into
             const renderId = 'mermaid-graph-' + Date.now();
             const { svg } = await window.mermaid.render(renderId, mermaidCode);
+            latestSvgMarkup = svg;
             diagramContainer.innerHTML = svg;
+            diagramContainer.classList.remove('is-empty');
+            triggerDiagramAnimation();
+            setToolbarState(true);
         } catch (error) {
-            diagramContainer.innerHTML = `<p class="placeholder-text" style="color: var(--error-color);"><strong>Mermaid Syntax Error:</strong><br>${error.message}</p><pre>${mermaidCode}</pre>`;
+            showDiagramMessage(`<strong>Mermaid Syntax Error:</strong><br>${error.message}`, { isError: true, preserveIllustration: false, allowHtml: true });
+            latestSvgMarkup = '';
+            setToolbarState(false);
             console.error("Mermaid render error:", error);
         }
     }
@@ -122,21 +145,134 @@ Do not include any other text, explanations, or titles before or after the code 
         }
     }
 
-      function switchTab(view) {
-          if (view === 'diagram') {
-              diagramTab.classList.add('active');
-              codeTab.classList.remove('active');
-              diagramContainer.classList.remove('hidden');
-              codeContainer.classList.add('hidden');
-              diagramTab.setAttribute('aria-selected', 'true');
-              codeTab.setAttribute('aria-selected', 'false');
-          } else {
-              diagramTab.classList.remove('active');
-              codeTab.classList.add('active');
-              diagramContainer.classList.add('hidden');
-              codeContainer.classList.remove('hidden');
-              diagramTab.setAttribute('aria-selected', 'false');
-              codeTab.setAttribute('aria-selected', 'true');
-          }
-      }
-  });
+    function switchTab(view) {
+        if (view === 'diagram') {
+            diagramTab.classList.add('active');
+            codeTab.classList.remove('active');
+            diagramContainer.classList.remove('hidden');
+            codeContainer.classList.add('hidden');
+            diagramTab.setAttribute('aria-selected', 'true');
+            codeTab.setAttribute('aria-selected', 'false');
+        } else {
+            diagramTab.classList.remove('active');
+            codeTab.classList.add('active');
+            diagramContainer.classList.add('hidden');
+            codeContainer.classList.remove('hidden');
+            diagramTab.setAttribute('aria-selected', 'false');
+            codeTab.setAttribute('aria-selected', 'true');
+        }
+    }
+
+    function setToolbarState(enabled) {
+        toolbarButtons.forEach((button) => {
+            if (!button) return;
+            button.disabled = !enabled;
+        });
+    }
+
+    function showDiagramMessage(message, { isError = false, preserveIllustration = true, allowHtml = false } = {}) {
+        const content = allowHtml ? message : escapeHtml(message);
+        const messageClass = isError ? 'placeholder-text error-message' : 'placeholder-text';
+        diagramContainer.innerHTML = `<p class="${messageClass}">${content}</p>`;
+        diagramContainer.classList.remove('has-diagram');
+        latestSvgMarkup = '';
+        if (preserveIllustration) {
+            diagramContainer.classList.add('is-empty');
+        } else {
+            diagramContainer.classList.remove('is-empty');
+        }
+    }
+
+    function resetCodeBlock() {
+        codeBlock.textContent = defaultCodePlaceholder;
+        codeBlock.classList.add('placeholder-text');
+    }
+
+    function triggerDiagramAnimation() {
+        diagramContainer.classList.remove('has-diagram');
+        // Force reflow so the animation retriggers on subsequent renders
+        void diagramContainer.offsetWidth;
+        diagramContainer.classList.add('has-diagram');
+    }
+
+    async function handleCopyClick() {
+        if (copyBtn.disabled || codeBlock.classList.contains('placeholder-text')) {
+            return;
+        }
+
+        const mermaidCode = codeBlock.textContent;
+
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(mermaidCode);
+            } else {
+                fallbackCopyText(mermaidCode);
+            }
+            showTemporaryFeedback(copyBtn, 'Copied!');
+        } catch (error) {
+            console.error('Clipboard copy failed:', error);
+            alert('Unable to copy the Mermaid code automatically. Please copy it manually.');
+        }
+    }
+
+    function fallbackCopyText(text) {
+        const tempTextArea = document.createElement('textarea');
+        tempTextArea.value = text;
+        tempTextArea.setAttribute('readonly', '');
+        tempTextArea.style.position = 'absolute';
+        tempTextArea.style.left = '-9999px';
+        document.body.appendChild(tempTextArea);
+        tempTextArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempTextArea);
+    }
+
+    function handleDownloadClick() {
+        if (downloadBtn.disabled || !latestSvgMarkup) {
+            return;
+        }
+
+        try {
+            const svgContent = latestSvgMarkup.trim().startsWith('<?xml')
+                ? latestSvgMarkup
+                : `<?xml version="1.0" encoding="UTF-8"?>\n${latestSvgMarkup}`;
+            const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = `sketchpad-diagram-${Date.now()}.svg`;
+            document.body.appendChild(anchor);
+            anchor.click();
+            document.body.removeChild(anchor);
+            URL.revokeObjectURL(url);
+            showTemporaryFeedback(downloadBtn, 'Saved!');
+        } catch (error) {
+            console.error('SVG download failed:', error);
+            alert('Unable to download the SVG right now. Please try again.');
+        }
+    }
+
+    function showTemporaryFeedback(button, message) {
+        const originalText = button.dataset.originalText || button.textContent;
+        button.dataset.originalText = originalText;
+        button.textContent = message;
+        button.classList.add('toolbar-button--success');
+
+        if (buttonFeedbackTimers.has(button)) {
+            clearTimeout(buttonFeedbackTimers.get(button));
+        }
+
+        const timeoutId = setTimeout(() => {
+            button.textContent = button.dataset.originalText;
+            button.classList.remove('toolbar-button--success');
+        }, 1600);
+
+        buttonFeedbackTimers.set(button, timeoutId);
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+});

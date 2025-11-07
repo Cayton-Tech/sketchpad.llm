@@ -44,6 +44,7 @@ body {
 }
 
 .diagram-container {
+    position: relative;
     background-color: var(--container-bg);
     border: 1px solid var(--border-color);
     border-top: none;
@@ -55,11 +56,64 @@ body {
     justify-content: center;
     align-items: center;
     overflow: auto;
+    transition: background 0.3s ease;
+}
+
+.diagram-container.is-empty {
+    background: radial-gradient(circle at top left, rgba(74, 144, 226, 0.08), transparent 45%),
+                radial-gradient(circle at bottom right, rgba(52, 152, 219, 0.12), transparent 40%),
+                var(--container-bg);
+}
+
+.diagram-container.is-empty::before,
+.diagram-container.is-empty::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    opacity: 0.5;
+    z-index: 0;
+}
+
+.diagram-container.is-empty::before {
+    width: 140px;
+    height: 140px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.18), rgba(74, 144, 226, 0));
+    top: 30px;
+    left: 20px;
+    transform: rotate(-8deg);
+}
+
+.diagram-container.is-empty::after {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.25), rgba(255, 255, 255, 0));
+    bottom: 40px;
+    right: 25px;
+}
+
+.diagram-container svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.diagram-container.has-diagram svg {
+    animation: fadeInUp 0.45s ease-out forwards;
 }
 
 .placeholder-text {
     color: var(--placeholder-color);
     font-size: 1.1em;
+    text-align: center;
+    max-width: 420px;
+    line-height: 1.5;
+    position: relative;
+    z-index: 1;
+}
+
+.error-message {
+    color: var(--error-color);
 }
 
 .controls-container {
@@ -136,6 +190,17 @@ button.loading::after {
     to { transform: rotate(360deg); }
 }
 
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* --- Viewer Tabs and Code Container --- */
 .tabs {
     display: flex;
@@ -143,6 +208,49 @@ button.loading::after {
     border-bottom: none;
     border-radius: 8px 8px 0 0;
     overflow: hidden;
+    flex: 1 1 auto;
+}
+
+.tabs-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.secondary-toolbar {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.toolbar-button {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 10px 14px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.toolbar-button:hover:not(:disabled) {
+    background-color: rgba(74, 144, 226, 0.1);
+    border-color: rgba(74, 144, 226, 0.5);
+    color: var(--primary-color);
+}
+
+.toolbar-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.toolbar-button--success {
+    background-color: rgba(46, 204, 113, 0.18) !important;
+    border-color: rgba(39, 174, 96, 0.4) !important;
+    color: #1e8449 !important;
 }
 
 .tab {
@@ -196,5 +304,10 @@ button.loading::after {
     button {
         padding: 12px;
         font-size: 1em;
+    }
+
+    .secondary-toolbar {
+        width: 100%;
+        justify-content: flex-end;
     }
 }

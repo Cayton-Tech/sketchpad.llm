@@ -29,11 +29,17 @@
 
         <!-- The area where the Mermaid diagram and code will be displayed -->
         <div class="viewer-container">
-            <div class="tabs" role="tablist">
-                <button id="diagram-tab" class="tab active" role="tab" aria-selected="true">Diagram</button>
-                <button id="code-tab" class="tab" role="tab" aria-selected="false">Code</button>
+            <div class="tabs-header">
+                <div class="tabs" role="tablist">
+                    <button id="diagram-tab" class="tab active" role="tab" aria-selected="true">Diagram</button>
+                    <button id="code-tab" class="tab" role="tab" aria-selected="false">Code</button>
+                </div>
+                <div class="secondary-toolbar" aria-label="Diagram actions">
+                    <button id="copy-btn" class="toolbar-button" type="button" disabled>Copy Code</button>
+                    <button id="download-btn" class="toolbar-button" type="button" disabled>Download SVG</button>
+                </div>
             </div>
-            <div id="diagram-container" class="diagram-container">
+            <div id="diagram-container" class="diagram-container is-empty">
                 <p class="placeholder-text">Your generated diagram will appear here...</p>
             </div>
             <pre id="code-container" class="code-container hidden"><code id="code-block" class="placeholder-text">Mermaid code will appear here...</code></pre>
