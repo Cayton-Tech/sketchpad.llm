@@ -9,6 +9,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const codeTab = document.getElementById('code-tab');
     const codeContainer = document.getElementById('code-container');
     const codeBlock = document.getElementById('code-block');
+    const formMessage = document.getElementById('form-message');
+    const successToast = document.getElementById('success-toast');
+
+    const DEFAULT_BUTTON_TEXT = generateBtn.textContent;
+    const loadingPhrases = [
+        'Generating your diagram…',
+        'Sketching connections…',
+        'Arranging the layout…',
+        'Adding the finishing touches…'
+    ];
+    let loadingMessageIndex = 0;
+    let loadingIntervalId = null;
+    let toastTimeoutId = null;
 
     // --- Event Listeners ---
     generateBtn.addEventListener('click', handleGenerateClick);
@@ -17,15 +30,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Main Function to Handle Generation ---
     async function handleGenerateClick() {
+        clearFormMessage();
+        hideToast();
+
         const apiKey = apiKeyInput.value.trim();
         const userPrompt = promptInput.value.trim();
 
         if (!apiKey) {
-            alert('Please enter your Google AI Studio API key.');
+            showFormMessage('error', 'Please enter your Google AI Studio API key.');
+            apiKeyInput.focus();
             return;
         }
         if (!userPrompt) {
-            alert('Please enter a description for the diagram.');
+            showFormMessage('error', 'Please enter a description for the diagram.');
+            promptInput.focus();
             return;
         }
 
@@ -36,10 +54,24 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const rawResponseText = await callGeminiApi(apiKey, userPrompt);
             const mermaidCode = extractMermaidCode(rawResponseText);
-            await renderMermaidDiagram(mermaidCode);
+
+            if (!mermaidCode) {
+                showFormMessage('error', 'Could not extract valid Mermaid code from the AI response. Try refining your prompt.');
+                await renderMermaidDiagram(mermaidCode);
+                return;
+            }
+
+            const rendered = await renderMermaidDiagram(mermaidCode);
+            if (rendered) {
+                showFormMessage('success', 'Diagram generated successfully.');
+                showToast('Diagram ready!');
+            } else {
+                showFormMessage('error', 'We couldn\'t render the diagram. Please check the Mermaid syntax.');
+            }
         } catch (error) {
             diagramContainer.innerHTML = `<p class="placeholder-text" style="color: var(--error-color);">Error: ${error.message}</p>`;
             console.error('Error generating diagram:', error);
+            showFormMessage('error', error.message || 'Something went wrong while generating the diagram.');
         } finally {
             setLoadingState(false);
         }
@@ -93,7 +125,7 @@ Do not include any other text, explanations, or titles before or after the code 
     async function renderMermaidDiagram(mermaidCode) {
         if (!mermaidCode) {
             diagramContainer.innerHTML = `<p class="placeholder-text" style="color: var(--error-color);">Could not extract valid Mermaid code from the API response. The response may have been empty or in an unexpected format.</p>`;
-            return;
+            return false;
         }
 
         codeBlock.textContent = mermaidCode;
@@ -104,9 +136,11 @@ Do not include any other text, explanations, or titles before or after the code 
             const renderId = 'mermaid-graph-' + Date.now();
             const { svg } = await window.mermaid.render(renderId, mermaidCode);
             diagramContainer.innerHTML = svg;
+            return true;
         } catch (error) {
             diagramContainer.innerHTML = `<p class="placeholder-text" style="color: var(--error-color);"><strong>Mermaid Syntax Error:</strong><br>${error.message}</p><pre>${mermaidCode}</pre>`;
             console.error("Mermaid render error:", error);
+            return false;
         }
     }
 
@@ -115,10 +149,69 @@ Do not include any other text, explanations, or titles before or after the code 
         generateBtn.disabled = isLoading;
         if (isLoading) {
             generateBtn.classList.add('loading');
-            generateBtn.textContent = 'Generating...';
+            generateBtn.setAttribute('aria-live', 'polite');
+            generateBtn.setAttribute('aria-busy', 'true');
+            loadingMessageIndex = 0;
+            updateLoadingMessage();
+            if (loadingIntervalId) {
+                clearInterval(loadingIntervalId);
+            }
+            loadingIntervalId = setInterval(() => {
+                loadingMessageIndex = (loadingMessageIndex + 1) % loadingPhrases.length;
+                updateLoadingMessage();
+            }, 2500);
         } else {
             generateBtn.classList.remove('loading');
-            generateBtn.textContent = 'Generate Diagram';
+            generateBtn.textContent = DEFAULT_BUTTON_TEXT;
+            generateBtn.removeAttribute('aria-live');
+            generateBtn.setAttribute('aria-busy', 'false');
+            if (loadingIntervalId) {
+                clearInterval(loadingIntervalId);
+                loadingIntervalId = null;
+            }
+        }
+    }
+
+    function updateLoadingMessage() {
+        generateBtn.textContent = loadingPhrases[loadingMessageIndex];
+    }
+
+    function showFormMessage(type, message) {
+        if (!message) return;
+        formMessage.textContent = message;
+        formMessage.className = `form-message form-message--${type} is-visible`;
+        const role = type === 'error' ? 'alert' : 'status';
+        const ariaLive = type === 'error' ? 'assertive' : 'polite';
+        formMessage.setAttribute('role', role);
+        formMessage.setAttribute('aria-live', ariaLive);
+    }
+
+    function clearFormMessage() {
+        formMessage.textContent = '';
+        formMessage.className = 'form-message';
+        formMessage.removeAttribute('role');
+        formMessage.setAttribute('aria-live', 'polite');
+    }
+
+    function showToast(message) {
+        if (!message) return;
+        successToast.textContent = message;
+        successToast.classList.add('visible');
+        successToast.setAttribute('aria-hidden', 'false');
+        if (toastTimeoutId) {
+            clearTimeout(toastTimeoutId);
+        }
+        toastTimeoutId = setTimeout(() => {
+            hideToast();
+        }, 4000);
+    }
+
+    function hideToast() {
+        successToast.classList.remove('visible');
+        successToast.setAttribute('aria-hidden', 'true');
+        if (toastTimeoutId) {
+            clearTimeout(toastTimeoutId);
+            toastTimeoutId = null;
         }
     }
 

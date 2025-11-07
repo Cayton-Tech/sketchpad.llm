@@ -6,6 +6,8 @@
     --border-color: #e0e0e0;
     --placeholder-color: #95a5a6;
     --error-color: #e74c3c;
+    --success-color: #27ae60;
+    --info-color: #4a90e2;
     --font-family: 'Inter', sans-serif;
 }
 
@@ -68,6 +70,69 @@ body {
     gap: 15px;
 }
 
+.form-messages {
+    min-height: 1.5em;
+}
+
+.form-message {
+    margin: 0;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    font-size: 0.95em;
+    line-height: 1.4;
+    display: none;
+}
+
+.form-message.is-visible {
+    display: block;
+}
+
+.form-message--error {
+    background-color: rgba(231, 76, 60, 0.08);
+    border-color: rgba(231, 76, 60, 0.3);
+    color: var(--error-color);
+}
+
+.form-message--success {
+    background-color: rgba(39, 174, 96, 0.1);
+    border-color: rgba(39, 174, 96, 0.35);
+    color: var(--success-color);
+}
+
+.form-message--info {
+    background-color: rgba(74, 144, 226, 0.1);
+    border-color: rgba(74, 144, 226, 0.3);
+    color: var(--info-color);
+}
+
+.toast {
+    position: relative;
+    padding: 0;
+    margin-top: 0;
+    height: 0;
+    border-radius: 6px;
+    background-color: rgba(39, 174, 96, 0.95);
+    color: #ffffff;
+    font-weight: 500;
+    max-width: 320px;
+    box-shadow: 0 10px 25px rgba(39, 174, 96, 0.25);
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.toast.visible {
+    padding: 12px 16px;
+    margin-top: 4px;
+    height: auto;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
 .api-key-container {
     display: flex;
     flex-direction: column;
@@ -118,6 +183,10 @@ button:hover {
 button.loading {
     cursor: not-allowed;
     background-color: #a9cce3;
+}
+
+button[aria-busy="true"] {
+    position: relative;
 }
 
 button.loading::after {

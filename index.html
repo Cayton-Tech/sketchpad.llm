@@ -25,6 +25,11 @@
             </div>
             <textarea id="prompt-input" placeholder="e.g., A flowchart for a user login process with success and failure paths..."></textarea>
             <button id="generate-btn">Generate Diagram</button>
+
+            <div class="form-messages" aria-live="polite">
+                <p id="form-message" class="form-message" aria-live="polite"></p>
+            </div>
+            <div id="success-toast" class="toast" role="status" aria-live="polite" aria-hidden="true"></div>
         </div>
 
         <!-- The area where the Mermaid diagram and code will be displayed -->
