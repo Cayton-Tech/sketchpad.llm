@@ -11,11 +11,37 @@ document.addEventListener('DOMContentLoaded', () => {
     const codeBlock = document.getElementById('code-block');
     const copyBtn = document.getElementById('copy-btn');
     const downloadBtn = document.getElementById('download-btn');
+    const statusBanner = document.getElementById('status-banner');
+    const apiKeyMessage = document.getElementById('api-key-message');
+    const promptMessage = document.getElementById('prompt-message');
+    const promptCharacterCount = document.getElementById('prompt-character-count');
+    const promptChips = Array.from(document.querySelectorAll('[data-prompt-chip]'));
 
     const toolbarButtons = [copyBtn, downloadBtn];
     const buttonFeedbackTimers = new WeakMap();
+    const fieldRegistry = {
+        apiKey: {
+            input: apiKeyInput,
+            message: apiKeyMessage,
+            container: apiKeyInput.closest('.form-field')
+        },
+        prompt: {
+            input: promptInput,
+            message: promptMessage,
+            container: promptInput.closest('.form-field')
+        }
+    };
     const defaultCodePlaceholder = codeBlock.textContent;
+    const loadingMessages = [
+        'Sketching your nodes and edges...',
+        'Polishing Mermaid syntax...',
+        'Rendering a crisp preview...'
+    ];
+
     let latestSvgMarkup = '';
+    let loadingIntervalId = null;
+    let loadingMessageIndex = 0;
+    let statusTimeoutId = null;
 
     // --- Event Listeners ---
     generateBtn.addEventListener('click', handleGenerateClick);
@@ -23,20 +49,44 @@ document.addEventListener('DOMContentLoaded', () => {
     codeTab.addEventListener('click', () => switchTab('code'));
     copyBtn.addEventListener('click', handleCopyClick);
     downloadBtn.addEventListener('click', handleDownloadClick);
+    promptInput.addEventListener('input', () => {
+        updateCharacterCount();
+        clearFieldMessage('prompt');
+    });
+    apiKeyInput.addEventListener('input', () => clearFieldMessage('apiKey'));
+
+    promptChips.forEach((chip) => {
+        chip.addEventListener('click', () => {
+            const samplePrompt = chip.dataset.prompt || chip.textContent || '';
+            promptInput.value = samplePrompt;
+            updateCharacterCount();
+            clearFieldMessage('prompt');
+            promptInput.focus({ preventScroll: true });
+            showStatus('info', 'Sample prompt loaded—tweak it and generate when ready!', { persist: false });
+        });
+    });
 
     setToolbarState(false);
+    updateCharacterCount();
 
     // --- Main Function to Handle Generation ---
     async function handleGenerateClick() {
         const apiKey = apiKeyInput.value.trim();
         const userPrompt = promptInput.value.trim();
 
+        clearFieldMessage('apiKey');
+        clearFieldMessage('prompt');
+
         if (!apiKey) {
-            alert('Please enter your Google AI Studio API key.');
+            setFieldMessage('apiKey', 'Please enter your Google AI Studio API key.', 'error');
+            showStatus('warning', 'Add your API key to generate diagrams.', { persist: true });
+            apiKeyInput.focus({ preventScroll: true });
             return;
         }
         if (!userPrompt) {
-            alert('Please enter a description for the diagram.');
+            setFieldMessage('prompt', 'Describe the diagram so we know what to build.', 'error');
+            showStatus('warning', 'Add a prompt to generate your diagram.', { persist: true });
+            promptInput.focus({ preventScroll: true });
             return;
         }
 
@@ -46,13 +96,16 @@ document.addEventListener('DOMContentLoaded', () => {
         resetCodeBlock();
         latestSvgMarkup = '';
         setToolbarState(false);
+        startLoadingCycle();
 
         try {
             const rawResponseText = await callGeminiApi(apiKey, userPrompt);
             const mermaidCode = extractMermaidCode(rawResponseText);
             await renderMermaidDiagram(mermaidCode);
         } catch (error) {
-            showDiagramMessage(`Error: ${error.message}`, { isError: true });
+            stopLoadingCycle();
+            showDiagramMessage(`Error: ${error.message}`, { isError: true, preserveIllustration: false });
+            showStatus('error', error.message || 'Something went wrong while generating the diagram.', { persist: true });
             setToolbarState(false);
             console.error('Error generating diagram:', error);
         } finally {
@@ -94,7 +147,7 @@ Do not include any other text, explanations, or titles before or after the code 
         }
 
         const responseData = await response.json();
-        return responseData.candidates[0].content.parts[0].text;
+        return responseData.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
     }
 
     // --- Mermaid Code Extraction Function ---
@@ -103,11 +156,13 @@ Do not include any other text, explanations, or titles before or after the code 
         const match = responseText.match(/```mermaid\r?\n([\s\S]*?)\r?\n```/);
         return match ? match[1].trim() : null;
     }
-    
+
     // --- Mermaid Rendering Function ---
     async function renderMermaidDiagram(mermaidCode) {
         if (!mermaidCode) {
-            showDiagramMessage('Could not extract valid Mermaid code from the API response. The response may have been empty or in an unexpected format.', { isError: true });
+            stopLoadingCycle();
+            showDiagramMessage('Could not extract valid Mermaid code from the API response. The response may have been empty or in an unexpected format.', { isError: true, preserveIllustration: false });
+            showStatus('error', 'The response did not include Mermaid code. Try refining your prompt.', { persist: true });
             resetCodeBlock();
             setToolbarState(false);
             return;
@@ -117,23 +172,28 @@ Do not include any other text, explanations, or titles before or after the code 
         codeBlock.classList.remove('placeholder-text');
 
         try {
-            // Unique ID for Mermaid to render into
             const renderId = 'mermaid-graph-' + Date.now();
             const { svg } = await window.mermaid.render(renderId, mermaidCode);
             latestSvgMarkup = svg;
             diagramContainer.innerHTML = svg;
             diagramContainer.classList.remove('is-empty');
+            diagramContainer.classList.add('has-diagram');
             triggerDiagramAnimation();
             setToolbarState(true);
+            stopLoadingCycle();
+            showStatus('success', 'Diagram ready! Copy or download it from the toolbar.', { persist: false });
+            setFieldMessage('prompt', 'Need tweaks? Update the prompt and generate again.', 'success');
         } catch (error) {
+            stopLoadingCycle();
             showDiagramMessage(`<strong>Mermaid Syntax Error:</strong><br>${error.message}`, { isError: true, preserveIllustration: false, allowHtml: true });
             latestSvgMarkup = '';
             setToolbarState(false);
-            console.error("Mermaid render error:", error);
+            showStatus('error', 'Mermaid could not render the diagram. Fix the prompt or try again.', { persist: true });
+            console.error('Mermaid render error:', error);
         }
     }
 
-    // --- UI Helper Function ---
+    // --- UI Helper Functions ---
     function setLoadingState(isLoading) {
         generateBtn.disabled = isLoading;
         if (isLoading) {
@@ -167,20 +227,33 @@ Do not include any other text, explanations, or titles before or after the code 
         toolbarButtons.forEach((button) => {
             if (!button) return;
             button.disabled = !enabled;
+            if (!enabled) {
+                button.classList.remove('toolbar-button--success');
+                if (button.dataset.originalText) {
+                    button.textContent = button.dataset.originalText;
+                }
+            }
         });
     }
 
     function showDiagramMessage(message, { isError = false, preserveIllustration = true, allowHtml = false } = {}) {
         const content = allowHtml ? message : escapeHtml(message);
         const messageClass = isError ? 'placeholder-text error-message' : 'placeholder-text';
-        diagramContainer.innerHTML = `<p class="${messageClass}">${content}</p>`;
-        diagramContainer.classList.remove('has-diagram');
-        latestSvgMarkup = '';
         if (preserveIllustration) {
+            diagramContainer.innerHTML = `
+                <div class="diagram-empty-illustration" aria-hidden="true">
+                    <span class="diagram-empty-node"></span>
+                    <span class="diagram-empty-node"></span>
+                    <span class="diagram-empty-connector"></span>
+                </div>
+                <p class="${messageClass}">${content}</p>`;
             diagramContainer.classList.add('is-empty');
         } else {
+            diagramContainer.innerHTML = `<p class="${messageClass}">${content}</p>`;
             diagramContainer.classList.remove('is-empty');
         }
+        diagramContainer.classList.remove('has-diagram');
+        latestSvgMarkup = '';
     }
 
     function resetCodeBlock() {
@@ -190,7 +263,6 @@ Do not include any other text, explanations, or titles before or after the code 
 
     function triggerDiagramAnimation() {
         diagramContainer.classList.remove('has-diagram');
-        // Force reflow so the animation retriggers on subsequent renders
         void diagramContainer.offsetWidth;
         diagramContainer.classList.add('has-diagram');
     }
@@ -209,9 +281,10 @@ Do not include any other text, explanations, or titles before or after the code 
                 fallbackCopyText(mermaidCode);
             }
             showTemporaryFeedback(copyBtn, 'Copied!');
+            showStatus('success', 'Mermaid code copied to your clipboard.', { persist: false });
         } catch (error) {
             console.error('Clipboard copy failed:', error);
-            alert('Unable to copy the Mermaid code automatically. Please copy it manually.');
+            showStatus('error', 'Unable to copy automatically. Please copy the code manually.', { persist: true });
         }
     }
 
@@ -246,9 +319,10 @@ Do not include any other text, explanations, or titles before or after the code 
             document.body.removeChild(anchor);
             URL.revokeObjectURL(url);
             showTemporaryFeedback(downloadBtn, 'Saved!');
+            showStatus('success', 'SVG downloaded to your device.', { persist: false });
         } catch (error) {
             console.error('SVG download failed:', error);
-            alert('Unable to download the SVG right now. Please try again.');
+            showStatus('error', 'Unable to download the SVG right now. Please try again.', { persist: true });
         }
     }
 
@@ -268,6 +342,73 @@ Do not include any other text, explanations, or titles before or after the code 
         }, 1600);
 
         buttonFeedbackTimers.set(button, timeoutId);
+    }
+
+    function startLoadingCycle() {
+        stopLoadingCycle();
+        loadingMessageIndex = 0;
+        showStatus('info', loadingMessages[loadingMessageIndex], { persist: true });
+        loadingIntervalId = setInterval(() => {
+            loadingMessageIndex = (loadingMessageIndex + 1) % loadingMessages.length;
+            showStatus('info', loadingMessages[loadingMessageIndex], { persist: true });
+        }, 2400);
+    }
+
+    function stopLoadingCycle() {
+        if (loadingIntervalId) {
+            clearInterval(loadingIntervalId);
+            loadingIntervalId = null;
+        }
+    }
+
+    function showStatus(type, message, { persist = false } = {}) {
+        if (!statusBanner) return;
+        statusBanner.textContent = message;
+        statusBanner.className = `status-banner status-${type}`;
+        statusBanner.hidden = false;
+
+        if (statusTimeoutId) {
+            clearTimeout(statusTimeoutId);
+            statusTimeoutId = null;
+        }
+
+        if (!persist) {
+            statusTimeoutId = setTimeout(() => {
+                hideStatus();
+            }, 4500);
+        }
+    }
+
+    function hideStatus() {
+        if (!statusBanner) return;
+        statusBanner.hidden = true;
+        statusBanner.textContent = '';
+        statusBanner.className = 'status-banner';
+    }
+
+    function setFieldMessage(fieldKey, message, state) {
+        const field = fieldRegistry[fieldKey];
+        if (!field) return;
+        field.message.textContent = message || '';
+        if (state) {
+            field.message.dataset.state = state;
+        } else {
+            delete field.message.dataset.state;
+        }
+        if (state === 'error') {
+            field.container.classList.add('has-error');
+        } else {
+            field.container.classList.remove('has-error');
+        }
+    }
+
+    function clearFieldMessage(fieldKey) {
+        setFieldMessage(fieldKey, '', null);
+    }
+
+    function updateCharacterCount() {
+        const count = promptInput.value.length;
+        promptCharacterCount.textContent = count ? `${count} character${count === 1 ? '' : 's'}` : '';
     }
 
     function escapeHtml(text) {
